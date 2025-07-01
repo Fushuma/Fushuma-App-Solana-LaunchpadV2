@@ -11,13 +11,14 @@ export const vestingImplementationAddress = '0x0d8e696475b233193d21E565C21080EbF
 
 // Provider (Infura, Alchemy, or Metamask provider)
 // Use with ethers.js v6
-const provider = new ethers.BrowserProvider(getMetaMaskEthereum());
+const metamask = getMetaMaskEthereum();
+const provider = metamask == null? new ethers.JsonRpcProvider("https://rpc.fushuma.com") : new ethers.BrowserProvider(getMetaMaskEthereum());
 
 // Connect the proxy address using the implementation ABI
-export const proxyAsLaunchpad = new ethers.Contract(proxyAddress, LaunchpadABI, provider);
-export const vestingImplementation = new ethers.Contract(vestingImplementationAddress, VestingImplementationABI, provider);
+export const proxyAsLaunchpad = provider == null? null : new ethers.Contract(proxyAddress, LaunchpadABI, provider);
+export const vestingImplementation = provider == null? null : new ethers.Contract(vestingImplementationAddress, VestingImplementationABI, provider);
 
-export function getMetaMaskEthereum(): any {
+export function getMetaMaskEthereum(): any | null {
   const providers = window?.ethereum?.providers;
 
   // If multiple providers exist (MetaMask, Phantom, Brave, etc.)
@@ -32,7 +33,8 @@ export function getMetaMaskEthereum(): any {
     return window.ethereum;
   }
 
-  throw new Error('MetaMask not found');
+  console.error('MetaMask not found');
+  return null;
 }
 
 function mapEvmIcoToIIcoInfo(index: number, params: any, state: any): IIcoInfoWithKey {
@@ -67,6 +69,7 @@ function mapEvmIcoToIIcoInfo(index: number, params: any, state: any): IIcoInfoWi
 
 export async function fetchAllICOs(): Promise<IIcoInfoWithKey[]> {
     try {
+      if(proxyAsLaunchpad == null) return [];
       const total = await proxyAsLaunchpad.counter();
       const results: IIcoInfoWithKey[] = [];
   
@@ -85,6 +88,7 @@ export async function fetchAllICOs(): Promise<IIcoInfoWithKey[]> {
 
 export async function fetchICO(index: string): Promise<IIcoInfoWithKey | null> {
   try {
+    if(proxyAsLaunchpad == null) return null;
     const ico = await proxyAsLaunchpad.getICO(index);
     const { 0: params, 1: state } = ico;
     return mapEvmIcoToIIcoInfo(Number(index), params, state);
@@ -125,6 +129,7 @@ async function queryLogsInChunks(
   toBlock: number,
   chunkSize = 1000
 ) {
+  if (proxyAsLaunchpad == null) return [];
   let logs: any[] = [];
   const buyEventFilter = proxyAsLaunchpad.filters.BuyToken();
 
@@ -138,6 +143,7 @@ async function queryLogsInChunks(
 }
 
 export async function getBuyHistory(buyerAddress: string, icoId: number, vestUnlockPercentage: number) {
+  if (proxyAsLaunchpad == null) return;
   const ico = await proxyAsLaunchpad.getICO(icoId);
   const { 0: params, 1: state } = ico;
   const startTimestamp = parseInt(params.startDate);
@@ -173,6 +179,7 @@ export async function getBuyHistory(buyerAddress: string, icoId: number, vestUnl
 export async function getEvmCostInfo(id: number, amount: BigInt) : Promise<IPurchaseAmount | null>  {
   try {
     if(!id && id <0 ) return null;
+    if(proxyAsLaunchpad == null) return null;
     const ico = await proxyAsLaunchpad.getValue(id, amount);
     const { 0: availableAmount, 1: value } = ico;
     
@@ -187,6 +194,7 @@ export async function getEvmCostInfo(id: number, amount: BigInt) : Promise<IPurc
 }
 
 export async function getPurchaseAmount(index: number) {
+  if(proxyAsLaunchpad == null) return null;
   const ico = await proxyAsLaunchpad.getICO(index);
   const { 0: params, 1: state } = ico;
 }
