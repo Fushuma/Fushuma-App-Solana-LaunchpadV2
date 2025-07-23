@@ -186,9 +186,9 @@
       case 'fuma':
         return '0x0000000000000000000000000000000000000000'; // native FUMA
       case 'usdc':
-        return '0x...USDC_ADDRESS'; // replace with actual address
+        return '0xf8EA5627691E041dae171350E8Df13c592084848'; // replace with actual address
       case 'usdt':
-        return '0x...USDT_ADDRESS'; // replace with actual address
+        return '0x1e11d176117dbEDbd234b1c6a10C6eb8dceD275e'; // replace with actual address
       case 'custom':
         return icoForm.value.customPaymentToken;
       default:
